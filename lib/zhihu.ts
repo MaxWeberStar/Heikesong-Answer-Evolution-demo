@@ -2,8 +2,17 @@
 // 命令与配额均对齐实测 `zhihu-cli capabilities`（见 TDD 第 2 节）
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { existsSync } from "node:fs";
 import type { RawAnswer } from "@/types";
 import { normalizeQuestionUrl, classifyZhihuLink, answerTimeFromUrl } from "@/lib/zhihu-link";
+import {
+  httpEnabled,
+  searchZhihuHttp,
+  searchGlobalHttp,
+  hotListHttp,
+  questionAnswersHttp,
+  questionRecommendHttp,
+} from "@/lib/zhihu-http";
 
 // 兼容旧引用：从纯工具文件 re-export（不含 node 依赖）
 export { normalizeQuestionUrl, classifyZhihuLink };
@@ -14,6 +23,19 @@ const execFileAsync = promisify(execFile);
 const CLI =
   process.env.ZHIHU_CLI ||
   "/Applications/看山工作台.app/Contents/Resources/cli-bundle/zhihu/current/zhihu-cli";
+
+/**
+ * 取数通道选择：
+ * - 本地（看山工作台）：CLI 存在 → 用 CLI。
+ * - 云端（Render/AiWorks）：CLI 不存在但配了 ZHIHU_ACCESS_SECRET → 用 HTTP API。
+ * - 显式 ZHIHU_TRANSPORT=http 强制走 HTTP。
+ */
+function useHttp(): boolean {
+  if (process.env.ZHIHU_TRANSPORT === "http") return httpEnabled();
+  if (process.env.ZHIHU_TRANSPORT === "cli") return false;
+  const cliExists = existsSync(CLI);
+  return !cliExists && httpEnabled();
+}
 
 export class ZhihuError extends Error {
   constructor(public code: number | string, message: string) {
@@ -109,6 +131,7 @@ function toRawAnswer(it: any): RawAnswer {
 
 /** 搜索知乎（单次 ≤10） */
 export async function searchZhihu(query: string, count = 10): Promise<RawAnswer[]> {
+  if (useHttp()) return searchZhihuHttp(query, count);
   const data = await callCli([
     "search",
     "zhihu",
@@ -150,6 +173,7 @@ export async function searchGlobal(
   count = 10,
   searchDb: "all" | "realtime" | "static" = "all"
 ): Promise<{ title: string; url: string; text: string }[]> {
+  if (useHttp()) return searchGlobalHttp(query, count, searchDb);
   const data = await callCli([
     "search",
     "global",
@@ -174,6 +198,7 @@ export async function questionAnswers(
   offset = 0,
   limit = 50
 ): Promise<{ answers: RawAnswer[]; isEnd: boolean; nextOffset: number }> {
+  if (useHttp()) return questionAnswersHttp(normalizeQuestionUrl(questionUrl), offset, limit);
   const data = await callCli([
     "question",
     "answers",
@@ -197,6 +222,7 @@ export async function questionAnswers(
 export async function hotList(
   limit = 30
 ): Promise<{ title: string; url?: string; summary?: string; thumbnail?: string }[]> {
+  if (useHttp()) return hotListHttp(limit);
   const data = await callCli(["hot", "--limit", String(Math.min(Math.max(limit, 1), 30))]);
   const items = data?.Items ?? data ?? [];
   return (Array.isArray(items) ? items : []).map((it: any) => ({
@@ -209,6 +235,7 @@ export async function hotList(
 
 /** 待答问题推荐（“更多发现”） */
 export async function questionRecommend(query: string, count = 10) {
+  if (useHttp()) return questionRecommendHttp(query, count);
   const data = await callCli([
     "question",
     "recommend",

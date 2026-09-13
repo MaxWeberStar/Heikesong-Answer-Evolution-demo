@@ -1,0 +1,38 @@
+# render.yaml — Render 部署配置（Blueprint）
+# 在 Render 新建 Web Service 选本仓库即可自动识别；或用 Blueprint 一键部署。
+services:
+  - type: web
+    name: answer-evolution
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      # 以下密钥在 Render 控制台 Environment 里配置，切勿写入仓库
+      - key: NODE_VERSION
+        value: "20"
+      - key: ZHIHU_TRANSPORT
+        value: http                 # 云端无 CLI，强制走知乎 HTTP API
+      - key: ZHIHU_ACCESS_SECRET
+        sync: false                 # 在控制台填入，获取: https://developer.zhihu.com/profile
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: EMBED_BASE_URL
+        sync: false
+      - key: EMBED_API_KEY
+        sync: false
+      - key: EMBED_MODEL
+        value: text-embedding-3-small
+      # 知乎 OAuth（拿到凭证后填；回调须与赛事页面登记一致）
+      - key: ZHIHU_OAUTH_APP_ID
+        sync: false
+      - key: ZHIHU_OAUTH_APP_KEY
+        sync: false
+      - key: ZHIHU_OAUTH_REDIRECT_URI
+        sync: false                 # 例: https://<你的render域名>/api/auth/callback
+      - key: APP_BASE_URL
+        sync: false                 # 例: https://<你的render域名>
