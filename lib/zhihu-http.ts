@@ -43,8 +43,8 @@ function toRaw(it: any): RawAnswer {
     authorBadge: it.AuthorBadgeText ?? "",
     contentText: it.ContentText ?? it.Summary ?? "",
     editTime,
-    voteUpCount: Number(it.VoteUpCount ?? 0),
-    commentCount: Number(it.CommentCount ?? 0),
+    voteUpCount: it.VoteUpCount == null ? -1 : Number(it.VoteUpCount),
+    commentCount: it.CommentCount == null ? -1 : Number(it.CommentCount),
     url,
     rankingScore: it.RankingScore,
   };

@@ -66,7 +66,7 @@ export default function GenealogyMap({ data }: { data: GenealogyData }) {
       formatter: (p: any) => {
         const r = p.data?.raw;
         if (!r) return "";
-        return `<b>${escapeHtml(r.claim)}</b><br/>簇：${labelOf.get(r.cluster) || r.cluster}｜${r.sourceType}<br/>${r.period || "时间未知"}${r.votes ? "｜👍" + r.votes : ""}<br/><span style="color:#2563eb">点击查看原文 ↗</span>`;
+        return `<b>${escapeHtml(r.claim)}</b><br/>簇：${labelOf.get(r.cluster) || r.cluster}｜${r.sourceType}<br/>${r.period || "时间未知"}${r.votes > 0 ? "｜👍" + r.votes : ""}<br/><span style="color:#2563eb">点击查看原文 ↗</span>`;
       },
     },
     legend: { top: 4, textStyle: { fontSize: 12 }, data: clusters.map((c) => c.label) },

@@ -121,7 +121,9 @@ export default function EvolutionTimeline({ data }: { data: EvolutionResult }) {
                 </div>
                 <div style={{ fontSize: 14, margin: "7px 0", color: "#1a1c1f" }}>{n.claim}</div>
                 <div style={{ fontSize: 12, color: "#9aa0a8" }}>
-                  👍 {n.votes}　💬 {n.comments}　<span style={{ color: "#2563eb" }}>原文 ↗</span>
+                  {n.votes >= 0 && <>👍 {n.votes}　</>}
+                  {n.comments >= 0 && <>💬 {n.comments}　</>}
+                  <span style={{ color: "#2563eb" }}>原文 ↗</span>
                 </div>
               </a>
             </div>

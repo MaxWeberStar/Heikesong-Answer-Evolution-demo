@@ -449,7 +449,7 @@ function HomeInner() {
                       <a key={a.id} href={a.url} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 10, textDecoration: "none", color: "inherit" }}>
                         <div style={{ fontSize: 13, color: "#1a1c1f" }}>{a.claim}</div>
                         <div style={{ fontSize: 11.5, color: "#9aa0a8" }}>
-                          <span style={{ color: "#7c3aed" }}>{a.sourceType}</span> · 👍{a.votes} · {a.postTime} ↗
+                          <span style={{ color: "#7c3aed" }}>{a.sourceType}</span>{a.votes >= 0 ? ` · 👍${a.votes}` : ""} · {a.postTime} ↗
                         </div>
                       </a>
                     ))}
@@ -497,7 +497,7 @@ function HomeInner() {
                 <a key={a.id} href={a.url} target="_blank" rel="noreferrer" style={rawItem}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                     <strong style={{ fontSize: 14 }}>{a.claim}</strong>
-                    <span style={{ color: "#2563eb", fontWeight: 700, whiteSpace: "nowrap" }}>{a.votes} 赞</span>
+                    {a.votes >= 0 && <span style={{ color: "#2563eb", fontWeight: 700, whiteSpace: "nowrap" }}>{a.votes} 赞</span>}
                   </div>
                   <div style={{ color: "#7a8089", fontSize: 12, marginTop: 5 }}>
                     <span style={{ color: "#7c3aed" }}>{a.sourceType}</span>

@@ -46,7 +46,7 @@ export async function analyzeEvolution(
     id: p.id,
     period: p.postTime ? p.postTime.slice(0, 7) : `#${i + 1}`, // 无时间时用序号占位
     role: ruleRole(p, i, sorted.length),
-    actor: (p.author || "匿名") + (p.authorBadge ? `（${p.authorBadge}）` : ""),
+    actor: (p.author || "知乎作者") + (p.authorBadge ? `（${p.authorBadge}）` : ""),
     claim: p.claim,
     votes: p.votes,
     comments: p.comments,

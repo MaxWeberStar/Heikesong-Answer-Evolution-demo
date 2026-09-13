@@ -2,11 +2,6 @@
 
 知乎问答观点的「时间演进 + 溯源」分析产品（黑客松 MVP）。
 
-> ✅ **云端部署已支持**：知乎数据支持双通道——本地用 `zhihu-cli`（看山桌面注入），
-> 云端（Render/AiWorks）无 CLI 时自动改用**知乎开放平台 HTTP API**（`lib/zhihu-http.ts`）。
-> 云端只需配环境变量 `ZHIHU_ACCESS_SECRET`（获取：https://developer.zhihu.com/profile ），无需 CLI；
-> 可选 `ZHIHU_TRANSPORT=http` 强制走 HTTP。
-
 ## 当前进度
 - ✅ `lib/zhihu.ts` — 知乎 CLI 封装（search / question answers / hot / global / recommend / 配额守卫 + Top 排序）
 - ✅ `lib/cache.ts` — 进程内存缓存（无数据库写入，AiWorks 友好）
