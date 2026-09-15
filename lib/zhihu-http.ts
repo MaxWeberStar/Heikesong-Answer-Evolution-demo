@@ -33,8 +33,10 @@ async function getJson(path: string, params: Record<string, string | number>): P
 /** 归一为 RawAnswer（字段名与 CLI 版一致） */
 function toRaw(it: any): RawAnswer {
   const url = it.Url ?? "";
-  // 问题帖回答无 EditTime → 用 answer id（雪花ID）反推发布时间，与 CLI 版一致
-  const editTime = Number(it.EditTime ?? 0) || answerTimeFromUrl(url);
+  const apiEditTime = Number(it.EditTime ?? 0);
+  const inferredEditTime = answerTimeFromUrl(url);
+  // 问题帖回答无 EditTime → 用 answer id（雪花ID）反推时间，但 UI 必须标为未核实。
+  const editTime = apiEditTime || inferredEditTime;
   return {
     id: String(it.ContentID ?? it.ContentToken ?? it.Url ?? Math.random()),
     title: it.Title ?? "",
@@ -43,6 +45,7 @@ function toRaw(it: any): RawAnswer {
     authorBadge: it.AuthorBadgeText ?? "",
     contentText: it.ContentText ?? it.Summary ?? "",
     editTime,
+    editTimeSource: apiEditTime ? "api" : inferredEditTime ? "answer_id" : "unknown",
     voteUpCount: it.VoteUpCount == null ? -1 : Number(it.VoteUpCount),
     commentCount: it.CommentCount == null ? -1 : Number(it.CommentCount),
     url,

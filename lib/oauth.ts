@@ -5,7 +5,14 @@ import crypto from "node:crypto";
 
 const APP_ID = process.env.ZHIHU_OAUTH_APP_ID || "";
 const APP_KEY = process.env.ZHIHU_OAUTH_APP_KEY || "";
-const REDIRECT_URI = process.env.ZHIHU_OAUTH_REDIRECT_URI || "";
+const APP_BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
+const REDIRECT_URI = process.env.ZHIHU_OAUTH_REDIRECT_URI
+  || new URL("/api/auth/callback", APP_BASE_URL).toString();
+const COOKIE_SECURE = process.env.COOKIE_SECURE === "1"
+  ? true
+  : process.env.COOKIE_SECURE === "0"
+    ? false
+    : REDIRECT_URI.startsWith("https://");
 // Mock 模式：无真实凭证时用于本地联调与 Demo（不访问真网）
 export const oauthMock = () => process.env.ZHIHU_OAUTH_MOCK === "1" || !APP_ID || !APP_KEY;
 export const oauthConfigured = () => Boolean(APP_ID && APP_KEY && REDIRECT_URI);
@@ -117,6 +124,10 @@ export function getSession(sid: string): Session | null {
 }
 export function destroySession(sid: string): void {
   if (sid) sessionStore.delete(sid);
+}
+
+export function sessionCookieOptions(maxAge: number) {
+  return { httpOnly: true, secure: COOKIE_SECURE, sameSite: "lax" as const, maxAge, path: "/" };
 }
 
 // —— Mock：无凭证时模拟一个知乎用户，便于本地/Demo 演示登录闭环 ——

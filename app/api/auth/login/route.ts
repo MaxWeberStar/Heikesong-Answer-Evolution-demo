@@ -1,6 +1,6 @@
 // app/api/auth/login/route.ts — 发起知乎 OAuth 授权
 import { NextResponse } from "next/server";
-import { issueState, buildAuthorizeUrl, oauthMock, createSession, mockUser } from "@/lib/oauth";
+import { issueState, buildAuthorizeUrl, oauthMock, createSession, mockUser, sessionCookieOptions } from "@/lib/oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,10 +17,10 @@ export async function GET() {
   const url = buildAuthorizeUrl(state);
   const res = NextResponse.redirect(url);
   // 把 state 也存 Cookie 以便回调时双重校验（HttpOnly）
-  res.cookies.set("ae_oauth_state", state, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 600, path: "/" });
+  res.cookies.set("ae_oauth_state", state, sessionCookieOptions(600));
   return res;
 }
 
 function setSidCookie(res: NextResponse, sid: string) {
-  res.cookies.set("ae_sid", sid, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 3600, path: "/" });
+  res.cookies.set("ae_sid", sid, sessionCookieOptions(3600));
 }

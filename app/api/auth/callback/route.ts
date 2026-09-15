@@ -1,6 +1,6 @@
 // app/api/auth/callback/route.ts — 知乎 OAuth 回调：校验 state → 换 token → 拉用户 → 建会话
 import { NextRequest, NextResponse } from "next/server";
-import { consumeState, exchangeToken, fetchUser, createSession } from "@/lib/oauth";
+import { consumeState, exchangeToken, fetchUser, createSession, sessionCookieOptions } from "@/lib/oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
     const user = await fetchUser(accessToken);
     const sid = createSession(user, accessToken, expiresIn);
     const res = NextResponse.redirect(new URL("/", base));
-    res.cookies.set("ae_sid", sid, { httpOnly: true, secure: true, sameSite: "lax", maxAge: expiresIn, path: "/" });
+    res.cookies.set("ae_sid", sid, sessionCookieOptions(expiresIn));
     // 清理临时 state cookie
-    res.cookies.set("ae_oauth_state", "", { maxAge: 0, path: "/" });
+    res.cookies.set("ae_oauth_state", "", sessionCookieOptions(0));
     return res;
   } catch (e) {
     return fail(base, "登录失败：" + (e as Error).message);

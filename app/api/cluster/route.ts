@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { value: result, cached } = await withCache(
-      `cluster:${topic || "adhoc"}:${embedEnabled() ? "emb" : llmEnabled() ? "llm" : "rule"}:${profiles.length}`,
+      `cluster:${topic || "adhoc"}:${embedEnabled() ? "emb" : llmEnabled() ? "llm" : "rule"}:layers-v2:${profiles.length}`,
       6 * 60 * 60 * 1000,
       () => analyzeGenealogy(topic, profiles)
     );

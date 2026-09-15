@@ -9,6 +9,7 @@ export interface RawAnswer {
   authorBadge: string;
   contentText: string; // 摘要，非全文
   editTime: number; // Unix 秒
+  editTimeSource?: "api" | "answer_id" | "unknown";
   voteUpCount: number;
   commentCount: number;
   url: string;
@@ -23,9 +24,12 @@ export type SourceType =
   | "心理机制型"
   | string; // 动态专属标签
 
+export type RelevanceTier = "core" | "extended";
+
 /** LLM 生成的答案画像（PRD 4.1.2） */
 export interface AnswerProfile {
   id: string;
+  sourceTitle: string; // 知乎返回的原文标题，属于原文事实
   claim: string; // 1 句核心主张
   sourceType: SourceType;
   school: string; // 派别 / 学科视角
@@ -34,12 +38,17 @@ export interface AnswerProfile {
   argumentStyle: "讲道理" | "举例" | "引用" | string;
   originEvent?: OriginRef; // 观点源头（理论/事件）
   postTime: string; // 由 editTime 转换
+  postTimeSource: "api" | "answer_id" | "unknown";
   votes: number;
   comments: number;
   author: string;
   authorBadge: string;
   url: string;
+  contentType?: "Answer" | "Article" | string;
   questionCategory?: string; // 第一层：所属问题维度
+  relevanceTier?: RelevanceTier;
+  relevanceScore?: number;
+  relevanceReason?: string;
 }
 
 /** 答案里指向的源头引用（未核实时 verified=false） */

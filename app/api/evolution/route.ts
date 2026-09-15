@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { value: result, cached } = await withCache(
-      `evolution:${topic || "adhoc"}:${llmEnabled() ? "llm" : "rule"}:${profiles.length}`,
+      `evolution:${topic || "adhoc"}:${llmEnabled() ? "llm" : "rule"}:layers-v2:${profiles.length}`,
       6 * 60 * 60 * 1000,
       () => analyzeEvolution(topic, profiles)
     );

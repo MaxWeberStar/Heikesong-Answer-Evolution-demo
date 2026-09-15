@@ -70,6 +70,7 @@ export async function profileAnswers(
 function mergeProfile(a: RawAnswer, p: any): AnswerProfile {
   return {
     id: a.id,
+    sourceTitle: a.title,
     claim: p.claim || a.title || (a.contentText || "").split(/[。！？\n]/)[0].slice(0, 60) || "（无摘要）",
     sourceType: p.sourceType || "未分类",
     school: p.school || "",
@@ -78,11 +79,13 @@ function mergeProfile(a: RawAnswer, p: any): AnswerProfile {
     argumentStyle: p.argumentStyle || "讲道理",
     originEvent: p.originText ? { text: p.originText, verified: false } : undefined,
     postTime: toDate(a.editTime),
+    postTimeSource: a.editTimeSource || "unknown",
     votes: a.voteUpCount,
     comments: a.commentCount,
     author: a.authorName,
     authorBadge: a.authorBadge,
     url: a.url,
+    contentType: a.contentType,
     questionCategory: p.questionCategory || undefined,
   };
 }
@@ -99,6 +102,7 @@ function ruleProfile(a: RawAnswer): AnswerProfile {
   const fallbackClaim = a.title || (a.contentText || "").split(/[。！？\n]/)[0].slice(0, 60) || "（无摘要）";
   return {
     id: a.id,
+    sourceTitle: a.title,
     claim: fallbackClaim,
     sourceType,
     school: "",
@@ -106,11 +110,13 @@ function ruleProfile(a: RawAnswer): AnswerProfile {
     keywords: [],
     argumentStyle: "讲道理",
     postTime: toDate(a.editTime),
+    postTimeSource: a.editTimeSource || "unknown",
     votes: a.voteUpCount,
     comments: a.commentCount,
     author: a.authorName,
     authorBadge: a.authorBadge,
     url: a.url,
+    contentType: a.contentType,
   };
 }
 

@@ -7,6 +7,8 @@ export type EvoRole = "初始" | "补充" | "质疑" | "新维度";
 
 export interface EvoNode {
   id: string;
+  sourceTitle: string;
+  postTimeSource: "api" | "answer_id" | "unknown";
   period: string; // 真实发布时间（YYYY-MM）
   role: EvoRole;
   actor: string; // 作者 + 身份
@@ -44,6 +46,8 @@ export async function analyzeEvolution(
   // 默认角色（无 LLM 时按时间/立场粗分）
   const nodes: EvoNode[] = sorted.map((p, i) => ({
     id: p.id,
+    sourceTitle: p.sourceTitle,
+    postTimeSource: p.postTimeSource,
     period: p.postTime ? p.postTime.slice(0, 7) : `#${i + 1}`, // 无时间时用序号占位
     role: ruleRole(p, i, sorted.length),
     actor: (p.author || "知乎作者") + (p.authorBadge ? `（${p.authorBadge}）` : ""),
@@ -51,9 +55,16 @@ export async function analyzeEvolution(
     votes: p.votes,
     comments: p.comments,
     url: p.url,
+    relation: i > 0
+      ? "当前为规则版降级结果：仅能确认时间顺序，缺少足够文本依据判断它是否补充、质疑或回应上一条观点。"
+      : undefined,
   }));
 
-  let synthesis: Synthesis = { consensus: [], divergence: [], blindspot: [] };
+  let synthesis: Synthesis = {
+    consensus: ["当前未配置 LLM，规则版未对回答主张做可靠的共识归纳。"],
+    divergence: ["当前未配置 LLM，规则版未对回答主张做可靠的分歧归纳。"],
+    blindspot: ["回答摘要不足以支持盲区判断，需打开原文核对。"],
+  };
 
   if (llmEnabled() && sorted.length) {
     try {
@@ -76,7 +87,12 @@ export async function analyzeEvolution(
         { json: true, maxTokens: 900 }
       );
       const j = parseJson<any>(out);
-      if (j) {
+      const hasSynthesis =
+        Array.isArray(j?.consensus) &&
+        Array.isArray(j?.divergence) &&
+        Array.isArray(j?.blindspot) &&
+        (j.consensus.length > 0 || j.divergence.length > 0 || j.blindspot.length > 0);
+      if (j && hasSynthesis) {
         const infoMap = new Map(
           (j.roles || []).map((r: any) => [String(r.id), r])
         );

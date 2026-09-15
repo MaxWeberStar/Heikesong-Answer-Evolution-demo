@@ -112,8 +112,10 @@ async function callCli(args: string[], timeout = "30s"): Promise<any> {
 /** 把 CLI 返回的一条 Item 归一为 RawAnswer */
 function toRawAnswer(it: any): RawAnswer {
   const url = it.Url ?? "";
-  // 问题帖入口的回答无 EditTime，但 URL 含 answer id（雪花ID）可反推发布时间 → 使时间轴可用
-  const editTime = Number(it.EditTime ?? 0) || answerTimeFromUrl(url);
+  const apiEditTime = Number(it.EditTime ?? 0);
+  const inferredEditTime = answerTimeFromUrl(url);
+  // 问题帖入口的回答无 EditTime，但 URL 含 answer id（雪花ID）可反推时间；必须保留来源边界。
+  const editTime = apiEditTime || inferredEditTime;
   return {
     id: String(it.ContentID ?? it.ContentToken ?? it.Url ?? Math.random()),
     title: it.Title ?? "",
@@ -122,6 +124,7 @@ function toRawAnswer(it: any): RawAnswer {
     authorBadge: it.AuthorBadgeText ?? "",
     contentText: it.ContentText ?? it.Summary ?? "",
     editTime,
+    editTimeSource: apiEditTime ? "api" : inferredEditTime ? "answer_id" : "unknown",
     voteUpCount: it.VoteUpCount == null ? -1 : Number(it.VoteUpCount),
     commentCount: it.CommentCount == null ? -1 : Number(it.CommentCount),
     url,
@@ -257,5 +260,4 @@ export async function quota(): Promise<Record<string, any>[]> {
 export function topByVotes(answers: RawAnswer[], n = 10): RawAnswer[] {
   return [...answers].sort((a, b) => b.voteUpCount - a.voteUpCount).slice(0, n);
 }
-
 

@@ -7,9 +7,27 @@ interface User {
   avatar?: string;
 }
 
-export default function TopNav() {
+type View = "board" | "evolution" | "genealogy" | "all";
+
+interface TopNavProps {
+  resultSpace?: boolean;
+  view?: View;
+  onViewChange?: (view: View) => void;
+  onReturn?: () => void;
+  onEmptyView?: () => void;
+}
+
+const VIEW_HINTS: Record<View, string> = {
+  board: "看观点何时出现，以及来源类型如何分布。",
+  evolution: "看哪些回答可能在补充、质疑或引入新维度。",
+  genealogy: "看算法如何把相近回答归成观点簇。",
+  all: "按顺序查看时间轴、演进卡片和观点谱系。",
+};
+
+export default function TopNav({ resultSpace = false, view = "board", onViewChange, onReturn, onEmptyView }: TopNavProps) {
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
+  const [hoveredView, setHoveredView] = useState<View | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   // 从服务端读登录态（真·知乎 OAuth 会话）
@@ -39,10 +57,11 @@ export default function TopNav() {
 
   return (
     <nav
+      className="ae-top-nav"
       style={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "minmax(180px, 1fr) auto minmax(240px, 1fr)",
         alignItems: "center",
-        justifyContent: "space-between",
         padding: "14px 26px",
         borderBottom: "1px solid #eef0f3",
         background: "#fff",
@@ -51,7 +70,7 @@ export default function TopNav() {
         zIndex: 50,
       }}
     >
-      <div
+      <div className="ae-brand"
         style={{
           fontSize: 19,
           fontWeight: 800,
@@ -65,9 +84,27 @@ export default function TopNav() {
         答案演进论 · 知乎2026
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <a href="/" style={{ color: "#1a1c1f", textDecoration: "none", fontSize: 14 }}>
-          分析话题
+      <div className="ae-view-nav" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+        {(["board", "evolution", "genealogy", "all"] as View[]).map((item) => (
+          <div key={item} style={{ position: "relative" }} onMouseEnter={() => setHoveredView(item)} onMouseLeave={() => setHoveredView(null)}>
+            <button
+              onClick={() => resultSpace ? onViewChange?.(item) : onEmptyView?.()}
+              title={VIEW_HINTS[item]}
+              style={viewButton(view === item)}
+            >
+              {item === "board" ? "时间轴看板" : item === "evolution" ? "演进卡片" : item === "genealogy" ? "观点谱系" : "全部分析"}
+            </button>
+            {hoveredView === item && (
+              <div style={viewTooltip}>
+                {VIEW_HINTS[item]}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="ae-nav-actions" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 18 }}>
+        <a href={resultSpace ? undefined : "/"} onClick={resultSpace ? (e) => { e.preventDefault(); onReturn?.(); } : undefined} style={{ color: "#1a1c1f", textDecoration: "none", fontSize: 14 }}>
+          分析话题{resultSpace ? "（返回）" : ""}
         </a>
         <a href="/discover" style={{ color: "#1a1c1f", textDecoration: "none", fontSize: 14 }}>
           热榜发现
@@ -165,6 +202,49 @@ export default function TopNav() {
           </div>
         )}
       </div>
+      <style>{`
+        @media (max-width: 860px) {
+          .ae-top-nav { grid-template-columns: 1fr auto; gap: 10px 14px; }
+          .ae-view-nav { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; justify-content: flex-start !important; padding-top: 2px; }
+          .ae-brand { font-size: 17px !important; }
+          .ae-nav-actions { gap: 10px !important; }
+        }
+        @media (max-width: 560px) {
+          .ae-top-nav { padding: 10px 14px !important; }
+          .ae-brand { font-size: 16px !important; }
+          .ae-view-nav button { font-size: 13px !important; padding: 7px 10px !important; }
+          .ae-nav-actions a { font-size: 12px !important; }
+          .ae-nav-actions { gap: 8px !important; }
+        }
+      `}</style>
     </nav>
   );
 }
+
+const viewButton = (active: boolean): React.CSSProperties => ({
+  padding: "8px 13px",
+  fontSize: 14.5,
+  fontWeight: 700,
+  color: active ? "#fff" : "#4a4f57",
+  background: active ? "linear-gradient(90deg,#2563eb,#7c3aed)" : "#f0f2f5",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+});
+
+const viewTooltip: React.CSSProperties = {
+  position: "absolute",
+  top: "calc(100% + 8px)",
+  right: 0,
+  zIndex: 60,
+  width: 190,
+  padding: "8px 10px",
+  color: "#fff",
+  background: "rgba(26,28,31,.88)",
+  borderRadius: 7,
+  boxShadow: "0 5px 18px rgba(20,25,40,.18)",
+  fontSize: 12,
+  lineHeight: 1.45,
+  pointerEvents: "none",
+};

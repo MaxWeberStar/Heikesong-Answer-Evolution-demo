@@ -4,7 +4,9 @@ import ReactECharts from "echarts-for-react";
 
 export interface GenealogyPoint {
   id: string; x: number; y: number; cluster: string;
-  claim: string; period: string; votes: number; url: string; sourceType: string;
+  sourceTitle: string; claim: string; period: string;
+  postTimeSource: "api" | "answer_id" | "unknown";
+  votes: number; url: string; sourceType: string;
 }
 export interface GenealogyCluster {
   id: string; label: string; size: number;
@@ -66,7 +68,8 @@ export default function GenealogyMap({ data }: { data: GenealogyData }) {
       formatter: (p: any) => {
         const r = p.data?.raw;
         if (!r) return "";
-        return `<b>${escapeHtml(r.claim)}</b><br/>簇：${labelOf.get(r.cluster) || r.cluster}｜${r.sourceType}<br/>${r.period || "时间未知"}${r.votes > 0 ? "｜👍" + r.votes : ""}<br/><span style="color:#2563eb">点击查看原文 ↗</span>`;
+        const timeNote = r.postTimeSource === "answer_id" ? `${r.period}（据回答ID推算，未核实）` : r.period || "时间未知";
+        return `<b>原文标题：</b>${escapeHtml(r.sourceTitle || "未返回标题")}<br/><b>模型分析：</b>${escapeHtml(r.claim)}<br/>观点簇：${labelOf.get(r.cluster) || r.cluster}｜${r.sourceType}<br/><b>未核实信息：</b>${escapeHtml(timeNote)}${r.votes > 0 ? "｜👍" + r.votes : ""}<br/><span style="color:#2563eb">点击查看原文 ↗</span>`;
       },
     },
     legend: { top: 4, textStyle: { fontSize: 12 }, data: clusters.map((c) => c.label) },

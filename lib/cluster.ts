@@ -10,7 +10,7 @@ import type { AnswerProfile, Cluster } from "@/types";
 export interface GenealogyResult {
   clusters: Cluster[];
   axisHint: { x: string; y: string }; // 两条主轴命名
-  points: { id: string; x: number; y: number; cluster: string; claim: string; period: string; votes: number; url: string; sourceType: string }[];
+  points: { id: string; x: number; y: number; cluster: string; sourceTitle: string; claim: string; period: string; postTimeSource: AnswerProfile["postTimeSource"]; votes: number; url: string; sourceType: string }[];
   mode: "embedding" | "llm" | "rule";
 }
 
@@ -68,8 +68,10 @@ async function embeddingPipeline(topic: string, items: AnswerProfile[]): Promise
     x: round(coords2d[i][0]),
     y: round(coords2d[i][1]),
     cluster: `c${km.clusters[i]}`,
+    sourceTitle: p.sourceTitle,
     claim: p.claim,
     period: p.postTime ? p.postTime.slice(0, 7) : "",
+    postTimeSource: p.postTimeSource,
     votes: p.votes,
     url: p.url,
     sourceType: p.sourceType,
@@ -227,8 +229,10 @@ async function llmPipeline(topic: string, items: AnswerProfile[]): Promise<Genea
       x: round(clamp(Number(jp.x ?? 0))),
       y: round(clamp(Number(jp.y ?? 0))),
       cluster: `c${cl}`,
+      sourceTitle: p.sourceTitle,
       claim: p.claim,
       period: p.postTime ? p.postTime.slice(0, 7) : "",
+      postTimeSource: p.postTimeSource,
       votes: p.votes,
       url: p.url,
       sourceType: p.sourceType,
@@ -263,8 +267,10 @@ function ruleFallback(items: AnswerProfile[]): GenealogyResult {
       x: round(Math.cos(ang) * (0.6 + jitter)),
       y: round(Math.sin(ang) * (0.6 + jitter)),
       cluster: `c${idxOfType.get(p.sourceType) ?? 0}`,
+      sourceTitle: p.sourceTitle,
       claim: p.claim,
       period: p.postTime ? p.postTime.slice(0, 7) : "",
+      postTimeSource: p.postTimeSource,
       votes: p.votes,
       url: p.url,
       sourceType: p.sourceType,
@@ -287,8 +293,10 @@ function singleClusterFallback(items: AnswerProfile[]): GenealogyResult {
     x: round(Math.cos((i / Math.max(items.length, 1)) * Math.PI * 2) * 0.5),
     y: round(Math.sin((i / Math.max(items.length, 1)) * Math.PI * 2) * 0.5),
     cluster: "c0",
+    sourceTitle: p.sourceTitle,
     claim: p.claim,
     period: p.postTime ? p.postTime.slice(0, 7) : "",
+    postTimeSource: p.postTimeSource,
     votes: p.votes,
     url: p.url,
     sourceType: p.sourceType,

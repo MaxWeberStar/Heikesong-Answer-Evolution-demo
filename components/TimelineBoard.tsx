@@ -111,10 +111,10 @@ export default function TimelineBoard({ answers, anchors = [] }: Props) {
       formatter: (p: any) => {
         const r = p.data?.raw;
         if (!r) return "";
-        const meta = hasVotes ? `${r.votes}赞｜${r.postTime}` : `${r.postTime}（据回答ID推算）`;
-        return `<b>${escapeHtml(r.claim)}</b><br/>来源型：${r.sourceType}｜立场：${
-          r.stance || "—"
-        }<br/>${r.author || "匿名"}${r.authorBadge ? " · " + r.authorBadge : ""}｜${meta}<br/><span style="color:#3b82f6">点击查看原文 ↗</span>`;
+        const timeNote = r.postTimeSource === "answer_id" ? `${r.postTime}（据回答ID推算，未核实）` : r.postTime || "时间未知";
+        return `<b>原文标题：</b>${escapeHtml(r.sourceTitle || "未返回标题")}<br/><b>模型分析：</b>${escapeHtml(r.claim)}<br/>来源型：${r.sourceType}｜相关性：${
+          r.relevanceTier === "extended" ? "扩展阅读" : "核心结果"
+        }｜立场：${r.stance || "—"}<br/><b>原文事实：</b>${r.author || "匿名"}${r.authorBadge ? " · " + r.authorBadge : ""}｜${hasVotes ? `${r.votes}赞｜` : ""}${timeNote}<br/><span style="color:#3b82f6">点击查看原文 ↗</span>`;
       },
     },
     legend: { top: 4, textStyle: { fontSize: 12 }, data: types },

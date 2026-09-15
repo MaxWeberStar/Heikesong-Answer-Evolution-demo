@@ -32,9 +32,11 @@ export async function GET(req: NextRequest) {
     if (mode === "question") {
       const url = sp.get("questionUrl") || "";
       if (!url) return bad("缺少 questionUrl");
+      const expand = sp.get("expand") === "1";
+      const query = (sp.get("query") || "").trim();
       // 问题回答配额仅 100 → 缓存 30 分钟；翻页取足再本地排序
       const { value, cached } = await withCache(
-        `qa:${url}`,
+        `qa:${url}:${expand ? query : "single"}`,
         30 * 60 * 1000,
         async () => {
           const acc: RawAnswer[] = [];
@@ -45,13 +47,38 @@ export async function GET(req: NextRequest) {
             if (r.isEnd) break;
             offset = r.nextOffset;
           }
-          return acc;
+          if (!expand || !query) return { answers: acc, expanded: false, expansionMessage: "未提供问题标题，当前仅分析该问题帖。" };
+
+          try {
+            const candidates = await searchZhihuMulti([query, `如何看待${query}`]);
+            const matched = candidates.filter((item) => isRelatedQuestionTitle(item.title, query));
+            const seen = new Set(acc.map((item) => item.url || item.id));
+            for (const item of matched) {
+              const key = item.url || item.id;
+              if (!seen.has(key)) {
+                seen.add(key);
+                acc.push(item);
+              }
+            }
+            return {
+              answers: acc,
+              expanded: matched.length > 0,
+              expansionMessage: matched.length > 0
+                ? `已从标题线索找到 ${matched.length} 条相近问答，合并后分析。`
+                : "未找到标题相似度足够高的其他问答，当前仅分析该问题帖。",
+            };
+          } catch {
+            return { answers: acc, expanded: false, expansionMessage: "相近问答扩展失败，当前仅分析该问题帖。" };
+          }
         }
       );
+      const payload = Array.isArray(value) ? { answers: value, expanded: undefined, expansionMessage: undefined } : value;
       return NextResponse.json({
         topic,
         mode,
-        answers: topByVotes(value, topN),
+        answers: topByVotes(payload.answers, topN),
+        expanded: payload.expanded,
+        expansionMessage: payload.expansionMessage,
         cached,
       });
     }
@@ -98,4 +125,29 @@ export async function GET(req: NextRequest) {
 
 function bad(msg: string) {
   return NextResponse.json({ error: "BAD_REQUEST", message: msg }, { status: 400 });
+}
+
+function isRelatedQuestionTitle(title: string, query: string): boolean {
+  const left = normalizeTitle(title);
+  const right = normalizeTitle(query);
+  if (!left || !right) return false;
+  if (left.includes(right) || right.includes(left)) return true;
+  return longestCommonSubsequence(left, right) / Math.max(left.length, right.length) >= 0.8;
+}
+
+function normalizeTitle(value: string): string {
+  return (value || "").toLowerCase().replace(/[\s，。！？、：；（）【】《》“”‘’"'!?.,:;()[\]<>]/g, "");
+}
+
+function longestCommonSubsequence(left: string, right: string): number {
+  const row = new Array(right.length + 1).fill(0);
+  for (const leftChar of left) {
+    let diagonal = 0;
+    for (let j = 1; j <= right.length; j++) {
+      const above = row[j];
+      row[j] = leftChar === right[j - 1] ? diagonal + 1 : Math.max(row[j], row[j - 1]);
+      diagonal = above;
+    }
+  }
+  return row[right.length];
 }
